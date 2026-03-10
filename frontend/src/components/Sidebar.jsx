@@ -22,25 +22,35 @@ const NavItem = ({ to, label, icon: Icon, onClick }) => (
 const Sidebar = ({ onClose }) => (
   <aside className="bg-white h-full min-h-screen p-4 sm:p-6 flex flex-col gap-6 border-r border-gray-200 w-full">
     {/* Header with Logo and Close Button */}
-    <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-      <div className="flex items-center gap-3">
+    <div className="pb-4 border-b border-gray-200">
+      {/* Mobile: Logo with text and close button */}
+      <div className="flex items-center justify-between lg:hidden">
+        <div className="flex items-center gap-3">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" 
+          />
+          <div>
+            <h1 className="text-base font-bold text-gray-900">IEMS</h1>
+            <p className="text-xs text-gray-500">Energy Monitor</p>
+          </div>
+        </div>
+        <button 
+          onClick={onClose}
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      {/* Laptop: Centered larger logo */}
+      <div className="hidden lg:flex justify-center">
         <img 
           src="/logo.png" 
           alt="Logo" 
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" 
+          className="w-20 h-20 rounded-full object-cover shadow-md" 
         />
-        <div className="lg:hidden">
-          <h1 className="text-base font-bold text-gray-900">IEMS</h1>
-          <p className="text-xs text-gray-500">Energy Monitor</p>
-        </div>
       </div>
-      {/* Close button - mobile only */}
-      <button 
-        onClick={onClose}
-        className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-      >
-        <X className="w-5 h-5" />
-      </button>
     </div>
 
     {/* Navigation */}

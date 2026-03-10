@@ -13,19 +13,8 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen relative">
-      {/* Fixed Background Image */}
-      <div 
-        className="fixed inset-0 z-0"
-        style={{ 
-          backgroundImage: "url('/background.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      
-      <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[260px_1fr] relative z-10">
+    <div className="min-h-screen bg-white">
+      <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[260px_1fr]">
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 

@@ -21,20 +21,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6">
-      {/* Fixed Background Image */}
-      <div 
-        className="fixed inset-0 z-0"
-        style={{ 
-          backgroundImage: "url('/background.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
       <form 
-        className="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-200 w-full max-w-sm sm:max-w-md relative z-10"
+        className="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-200 w-full max-w-sm sm:max-w-md"
         onSubmit={submit}
       >
         {/* Header */}
