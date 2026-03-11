@@ -69,6 +69,17 @@ app.use("/api/device-control", controlRoutes);
 app.use("/api/comparison", comparisonRoutes);
 app.use("/api/admin", adminRoutes);
 
+// Serve frontend static files in production
+const path = require("path");
+const frontendDist = path.join(__dirname, "..", "frontend", "dist");
+app.use(express.static(frontendDist));
+
+// SPA fallback — serve index.html for all non-API routes
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
+
 app.use(errorHandler);
 
 const port = process.env.PORT || 5000;

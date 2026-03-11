@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: iot-energy-monitor
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: THINGSPEAK_CHANNEL_ID
+        value: "3294471"
+      - key: THINGSPEAK_READ_KEY
+        value: "Y8FB83272XJSJ4K5"
+      - key: THINGSPEAK_WRITE_KEY
+        value: "8CE7TT90YX7QC4I2"
+      - key: CARBON_EMISSION_FACTOR
+        value: "0.82"
+      - key: ADMIN_EMAIL
+        value: "admin@iot.com"
+      - key: ADMIN_PASSWORD
+        value: "admin123"
