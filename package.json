@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Industrial IoT Energy Monitoring System",
   "scripts": {
-    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "build": "npm install --prefix backend && npm install --prefix frontend --include=dev && npm run build --prefix frontend",
     "start": "node backend/server.js"
   },
   "engines": {
