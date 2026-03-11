@@ -25,7 +25,7 @@ const adminRoutes = require("./routes/admin");
 const devicePollingService = require("./services/devicePollingService");
 const webSocketService = require("./services/websocketService");
 const alertService = require("./services/alertService");
-const { getDeviceByIdWithKeys } = require("./controllers/deviceController");
+const { getDeviceByIdWithKeys, FIELD_MAPPINGS } = require("./controllers/deviceController");
 
 const app = express();
 const server = http.createServer(app);
@@ -73,17 +73,30 @@ app.use(errorHandler);
 
 const port = process.env.PORT || 5000;
 
+// ThingSpeak channel credentials (shared by both bulbs)
+const CHANNEL_ID = process.env.THINGSPEAK_CHANNEL_ID || "3294471";
+const READ_KEY = process.env.THINGSPEAK_READ_KEY || "Y8FB83272XJSJ4K5";
+const WRITE_KEY = process.env.THINGSPEAK_WRITE_KEY || "8CE7TT90YX7QC4I2";
+
 // Initialize services on startup
 const initializeServices = () => {
   console.log("Initializing IoT Dashboard services...");
 
-  // Hardcoded default device with ThingSpeak credentials
+  // Register both bulbs as virtual devices sharing the same ThingSpeak channel
   const defaultDevices = [
     {
-      deviceId: "device-1",
-      channelId: "3262654",
-      readKey: "MQDH6IR59TOT5JF5",
-      writeKey: "03CL3839V4KA7EXL"
+      deviceId: "led-bulb",
+      channelId: CHANNEL_ID,
+      readKey: READ_KEY,
+      writeKey: WRITE_KEY,
+      fieldMapping: FIELD_MAPPINGS.led
+    },
+    {
+      deviceId: "fluorescent-bulb",
+      channelId: CHANNEL_ID,
+      readKey: READ_KEY,
+      writeKey: WRITE_KEY,
+      fieldMapping: FIELD_MAPPINGS.fluorescent
     }
   ];
 
@@ -112,7 +125,7 @@ const initializeServices = () => {
     });
   }
 
-  console.log(`Registered ${defaultDevices.length} devices for polling`);
+  console.log(`Registered ${defaultDevices.length} devices for polling (shared channel: ${CHANNEL_ID})`);
 };
 
 server.listen(port, () => {

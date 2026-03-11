@@ -2,16 +2,38 @@ const { toCsv } = require("../utils/csvExport");
 const { buildPdfReport } = require("../utils/pdfReport");
 const { fetchFeeds, fetchCsv } = require("../services/thingspeakService");
 const { buildAdvancedAnalytics } = require("../services/advancedCalculations");
+const { getDeviceByIdWithKeys } = require("./deviceController");
 
-const mapFeedToReading = (feed, deviceId) => ({
-  deviceId,
-  voltage: Number(feed.field1 || 0),
-  current: Number(feed.field2 || 0),
-  power: Number(feed.field3 || 0),
-  energy: Number(feed.field4 || 0),
-  temperature: Number(feed.field5 || 0),
-  timestamp: feed.created_at
-});
+/**
+ * Map a ThingSpeak feed to a reading using device-specific field mapping.
+ */
+const mapFeedToReading = (feed, deviceId) => {
+  const device = getDeviceByIdWithKeys(deviceId);
+  const fm = device ? device.fieldMapping : null;
+
+  if (fm) {
+    return {
+      deviceId,
+      voltage: Number(feed[fm.voltage] || 0),
+      current: Number(feed[fm.current] || 0),
+      power: Number(feed[fm.power] || 0),
+      energy: Number(feed[fm.energy] || 0),
+      temperature: Number(feed[fm.temperature] || 0),
+      timestamp: feed.created_at
+    };
+  }
+
+  // Legacy default mapping
+  return {
+    deviceId,
+    voltage: Number(feed.field1 || 0),
+    current: Number(feed.field2 || 0),
+    power: Number(feed.field3 || 0),
+    energy: Number(feed.field4 || 0),
+    temperature: Number(feed.field5 || 0),
+    timestamp: feed.created_at
+  };
+};
 
 const buildStats = (rows) => {
   if (!rows.length) {

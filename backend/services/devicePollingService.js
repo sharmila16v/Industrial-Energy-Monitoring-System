@@ -1,7 +1,7 @@
 /**
  * Device Polling Service
  * Handles real-time data fetching from ThingSpeak for all registered devices
- * Implements per-device polling with configurable intervals
+ * Supports multi-device field mapping from a single ThingSpeak channel
  */
 
 const axios = require("axios");
@@ -21,7 +21,8 @@ class DevicePollingService extends EventEmitter {
 
   /**
    * Register a device for polling
-   * @param {Object} device - Device configuration
+   * @param {Object} device - Device configuration including fieldMapping
+   * fieldMapping example: { voltage: 'field1', current: 'field2', power: 'field4', temperature: 'field6', energy: 'field7' }
    */
   registerDevice(device) {
     if (!device.channelId || !device.readKey) {
@@ -36,7 +37,7 @@ class DevicePollingService extends EventEmitter {
       errorCount: 0
     });
 
-    console.log(`Device registered for polling: ${device.deviceId}`);
+    console.log(`Device registered for polling: ${device.deviceId} (fields: ${JSON.stringify(device.fieldMapping || 'default')})`);
     return true;
   }
 
@@ -83,7 +84,7 @@ class DevicePollingService extends EventEmitter {
         }
       );
 
-      const reading = this.mapFeedToReading(data, deviceId);
+      const reading = this.mapFeedToReading(data, deviceId, device.fieldMapping);
       
       // Update cache
       this.cache.set(deviceId, {
@@ -143,8 +144,8 @@ class DevicePollingService extends EventEmitter {
       );
 
       const feeds = (data.feeds || [])
-        .filter(feed => feed && (feed.field1 || feed.field2 || feed.field3))
-        .map(feed => this.mapFeedToReading(feed, deviceId));
+        .filter(feed => feed && (feed.field1 || feed.field2 || feed.field3 || feed.field4 || feed.field5))
+        .map(feed => this.mapFeedToReading(feed, deviceId, device.fieldMapping));
 
       return {
         channel: data.channel,
@@ -157,13 +158,32 @@ class DevicePollingService extends EventEmitter {
   }
 
   /**
-   * Map ThingSpeak feed to standardized reading format
-   * field1 → Voltage, field2 → Current, field3 → Power,
-   * field4 → Energy, field5 → Temperature
+   * Map ThingSpeak feed to standardized reading format using device-specific field mapping.
+   * 
+   * Default mapping (legacy single-device):
+   *   field1 → Voltage, field2 → Current, field3 → Power, field4 → Energy, field5 → Temperature
+   * 
+   * With fieldMapping (2-bulb Approach A):
+   *   Each device specifies which ThingSpeak field maps to voltage/current/power/energy/temperature
    */
-  mapFeedToReading(feed, deviceId) {
+  mapFeedToReading(feed, deviceId, fieldMapping) {
     if (!feed) return null;
 
+    if (fieldMapping) {
+      // Use device-specific field mapping
+      return {
+        deviceId,
+        voltage: this.parseField(feed[fieldMapping.voltage]),
+        current: this.parseField(feed[fieldMapping.current]),
+        power: this.parseField(feed[fieldMapping.power]),
+        energy: this.parseField(feed[fieldMapping.energy]),
+        temperature: this.parseField(feed[fieldMapping.temperature]),
+        timestamp: feed.created_at || new Date().toISOString(),
+        entryId: feed.entry_id
+      };
+    }
+
+    // Legacy default mapping
     return {
       deviceId,
       voltage: this.parseField(feed.field1),
@@ -229,11 +249,52 @@ class DevicePollingService extends EventEmitter {
     const cronExpression = `*/${intervalSeconds} * * * * *`;
     
     this.globalPollingJob = cron.schedule(cronExpression, async () => {
-      for (const [deviceId] of this.devices) {
+      // Group devices by channelId to avoid duplicate API calls
+      const channelGroups = new Map();
+      for (const [deviceId, device] of this.devices) {
+        const key = `${device.channelId}_${device.readKey}`;
+        if (!channelGroups.has(key)) {
+          channelGroups.set(key, []);
+        }
+        channelGroups.get(key).push(device);
+      }
+
+      // Fetch once per channel, then map to each device
+      for (const [channelKey, devices] of channelGroups) {
         try {
-          await this.fetchLatestReading(deviceId);
+          const firstDevice = devices[0];
+          const { data } = await axios.get(
+            `${this.baseUrl}/channels/${firstDevice.channelId}/feeds/last.json`,
+            {
+              params: { api_key: firstDevice.readKey },
+              timeout: 10000
+            }
+          );
+
+          // Map the single feed to each virtual device using its field mapping
+          for (const device of devices) {
+            const reading = this.mapFeedToReading(data, device.deviceId, device.fieldMapping);
+            
+            this.cache.set(device.deviceId, {
+              data: reading,
+              timestamp: Date.now()
+            });
+
+            this.latestReadings.set(device.deviceId, reading);
+            device.lastFetch = new Date().toISOString();
+            device.status = "active";
+            device.errorCount = 0;
+
+            this.emit("reading", { deviceId: device.deviceId, reading });
+          }
         } catch (error) {
-          // Error already logged in fetchLatestReading
+          devices.forEach(device => {
+            device.errorCount++;
+            if (device.errorCount >= 3) {
+              device.status = "error";
+            }
+          });
+          console.error(`Error polling channel ${channelKey}:`, error.message);
         }
       }
     });

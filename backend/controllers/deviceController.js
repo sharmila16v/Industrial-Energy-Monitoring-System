@@ -22,52 +22,72 @@ const DEVICE_TYPES = [
   "Other"
 ];
 
-// Initialize with default devices
+// Field mappings for 2-bulb single-channel setup (Approach A)
+const FIELD_MAPPINGS = {
+  led: {
+    voltage: "field1",      // Shared voltage
+    current: "field2",      // LED current
+    power: "field4",        // LED power
+    temperature: "field6",  // Shared temperature
+    energy: "field7"        // LED energy
+  },
+  fluorescent: {
+    voltage: "field1",      // Shared voltage
+    current: "field3",      // Fluorescent current
+    power: "field5",        // Fluorescent power
+    temperature: "field6",  // Shared temperature
+    energy: "field8"        // Fluorescent energy
+  }
+};
+
+// ThingSpeak channel credentials (shared by both devices)
+const CHANNEL_ID = process.env.THINGSPEAK_CHANNEL_ID || "3294471";
+const READ_KEY = process.env.THINGSPEAK_READ_KEY || "Y8FB83272XJSJ4K5";
+const WRITE_KEY = process.env.THINGSPEAK_WRITE_KEY || "8CE7TT90YX7QC4I2";
+
+// Initialize with 2 default devices sharing the same channel
 let devices = [
   {
-    deviceId: process.env.THINGSPEAK_DEVICE_ID || "led-bulb-1",
-    name: process.env.DEVICE_NAME || "LED Bulb #1",
-    location: process.env.DEVICE_LOCATION || "Production Floor",
+    deviceId: "led-bulb",
+    name: "LED Bulb",
+    location: "Production Floor",
     type: "LED Bulb",
     thresholds: getThresholds(),
-    secretKey: process.env.DEVICE_SECRET_KEY || process.env.THINGSPEAK_WRITE_KEY,
-    channelId: process.env.THINGSPEAK_CHANNEL_ID,
-    readKey: process.env.THINGSPEAK_READ_KEY,
-    writeKey: process.env.THINGSPEAK_WRITE_KEY,
-    // New industrial fields
-    ratedPower: Number(process.env.RATED_POWER || 100),
-    tariffRate: Number(process.env.TARIFF_RATE || 0.18),
+    secretKey: WRITE_KEY,
+    channelId: CHANNEL_ID,
+    readKey: READ_KEY,
+    writeKey: WRITE_KEY,
+    fieldMapping: FIELD_MAPPINGS.led,
+    ratedPower: Number(process.env.RATED_POWER || 15),
+    tariffRate: Number(process.env.TARIFF_RATE || 6.50),
     emissionFactor: Number(process.env.CARBON_EMISSION_FACTOR || 0.82),
     status: "active",
     controlState: "on",
-    peakDemandLimit: 5000,
+    peakDemandLimit: 100,
     temperatureWarning: 60,
     createdAt: new Date().toISOString()
-  }
-];
-
-// Add second device if configured
-if (process.env.THINGSPEAK_CHANNEL_ID_2) {
-  devices.push({
-    deviceId: process.env.THINGSPEAK_DEVICE_ID_2 || "fluorescent-bulb-1",
-    name: "Fluorescent Bulb #1",
+  },
+  {
+    deviceId: "fluorescent-bulb",
+    name: "Fluorescent Bulb",
     location: "Warehouse",
     type: "Fluorescent Bulb",
     thresholds: getThresholds(),
-    secretKey: crypto.randomBytes(16).toString("hex"),
-    channelId: process.env.THINGSPEAK_CHANNEL_ID_2,
-    readKey: process.env.THINGSPEAK_READ_KEY_2,
-    writeKey: process.env.THINGSPEAK_WRITE_KEY_2,
-    ratedPower: 60,
-    tariffRate: 0.18,
-    emissionFactor: 0.82,
+    secretKey: WRITE_KEY,
+    channelId: CHANNEL_ID,
+    readKey: READ_KEY,
+    writeKey: WRITE_KEY,
+    fieldMapping: FIELD_MAPPINGS.fluorescent,
+    ratedPower: Number(process.env.RATED_POWER_2 || 40),
+    tariffRate: Number(process.env.TARIFF_RATE || 6.50),
+    emissionFactor: Number(process.env.CARBON_EMISSION_FACTOR || 0.82),
     status: "active",
     controlState: "on",
-    peakDemandLimit: 3000,
+    peakDemandLimit: 200,
     temperatureWarning: 55,
     createdAt: new Date().toISOString()
-  });
-}
+  }
+];
 
 const listDevices = async (req, res, next) => {
   try {
@@ -113,7 +133,8 @@ const createDevice = async (req, res, next) => {
       tariffRate,
       emissionFactor,
       peakDemandLimit,
-      temperatureWarning
+      temperatureWarning,
+      fieldMapping
     } = req.body;
 
     // Validate required fields
@@ -134,11 +155,12 @@ const createDevice = async (req, res, next) => {
       type: type || "Other",
       thresholds: thresholds || getThresholds(),
       secretKey,
-      channelId: channelId || null,
-      readKey: readKey || null,
-      writeKey: writeKey || null,
+      channelId: channelId || CHANNEL_ID,
+      readKey: readKey || READ_KEY,
+      writeKey: writeKey || WRITE_KEY,
+      fieldMapping: fieldMapping || null,
       ratedPower: Number(ratedPower) || 100,
-      tariffRate: Number(tariffRate) || 0.18,
+      tariffRate: Number(tariffRate) || 6.50,
       emissionFactor: Number(emissionFactor) || 0.82,
       status: "active",
       controlState: "off",
@@ -268,9 +290,15 @@ const deleteDevice = async (req, res, next) => {
   }
 };
 
-// Helper function to get device by ID with all details
+// Helper function to get device by ID with all details (including fieldMapping)
 const getDeviceByIdWithKeys = (deviceId) => {
   return devices.find((item) => item.deviceId === deviceId);
+};
+
+// Get field mapping for a device
+const getFieldMapping = (deviceId) => {
+  const device = devices.find((item) => item.deviceId === deviceId);
+  return device ? device.fieldMapping : null;
 };
 
 module.exports = { 
@@ -282,5 +310,7 @@ module.exports = {
   deleteDevice,
   getDeviceByIdWithKeys,
   getDeviceTypes,
-  DEVICE_TYPES
+  getFieldMapping,
+  DEVICE_TYPES,
+  FIELD_MAPPINGS
 };
