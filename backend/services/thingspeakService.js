@@ -24,10 +24,11 @@ const ensureConfig = () => {
 };
 
 /**
- * Write reading to ThingSpeak using the 8-field layout:
- * field1=voltage, field2=current_led, field3=current_fluoro,
- * field4=power_led, field5=power_fluoro, field6=temperature,
- * field7=energy_led, field8=energy_fluoro
+ * Write reading to ThingSpeak using the dual-load layout:
+ * field1=voltage, field2=current_led, field3=power_led,
+ * field4=energy_led, field5=current_incandescent,
+ * field6=power_incandescent, field7=energy_incandescent,
+ * field8=temperature(optional)
  */
 const writeReading = async (reading) => {
   const { writeKey } = ensureConfig();
@@ -35,12 +36,12 @@ const writeReading = async (reading) => {
     api_key: writeKey,
     field1: reading.voltage,
     field2: reading.current_led,
-    field3: reading.current_fluoro,
-    field4: reading.power_led,
-    field5: reading.power_fluoro,
-    field6: reading.temperature,
-    field7: reading.energy_led,
-    field8: reading.energy_fluoro
+    field3: reading.power_led,
+    field4: reading.energy_led,
+    field5: reading.current_incandescent,
+    field6: reading.power_incandescent,
+    field7: reading.energy_incandescent,
+    field8: reading.temperature
   };
 
   if (reading.timestamp) {

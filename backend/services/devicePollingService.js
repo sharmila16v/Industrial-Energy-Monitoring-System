@@ -177,7 +177,9 @@ class DevicePollingService extends EventEmitter {
         current: this.parseField(feed[fieldMapping.current]),
         power: this.parseField(feed[fieldMapping.power]),
         energy: this.parseField(feed[fieldMapping.energy]),
-        temperature: this.parseField(feed[fieldMapping.temperature]),
+        temperature: this.parseField(
+          fieldMapping.temperature ? feed[fieldMapping.temperature] : feed.field8
+        ),
         timestamp: feed.created_at || new Date().toISOString(),
         entryId: feed.entry_id
       };

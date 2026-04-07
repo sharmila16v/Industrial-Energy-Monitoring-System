@@ -5,6 +5,7 @@ const devicePollingService = require("../services/devicePollingService");
 // Device types for industrial applications
 const DEVICE_TYPES = [
   "LED Bulb",
+  "Incandescent Bulb",
   "Fluorescent Bulb",
   "Motor",
   "Industrial Heater",
@@ -22,21 +23,21 @@ const DEVICE_TYPES = [
   "Other"
 ];
 
-// Field mappings for 2-bulb single-channel setup (Approach A)
+// Field mappings for 2-bulb single-channel setup (ThingSpeak fields 1-7)
 const FIELD_MAPPINGS = {
   led: {
     voltage: "field1",      // Shared voltage
     current: "field2",      // LED current
-    power: "field4",        // LED power
-    temperature: "field6",  // Shared temperature
-    energy: "field7"        // LED energy
+    power: "field3",        // LED power
+    temperature: "field8",  // Optional shared temperature
+    energy: "field4"        // LED energy
   },
-  fluorescent: {
+  incandescent: {
     voltage: "field1",      // Shared voltage
-    current: "field3",      // Fluorescent current
-    power: "field5",        // Fluorescent power
-    temperature: "field6",  // Shared temperature
-    energy: "field8"        // Fluorescent energy
+    current: "field5",      // Incandescent current
+    power: "field6",        // Incandescent power
+    temperature: "field8",  // Optional shared temperature
+    energy: "field7"        // Incandescent energy
   }
 };
 
@@ -49,7 +50,7 @@ const WRITE_KEY = process.env.THINGSPEAK_WRITE_KEY || "8CE7TT90YX7QC4I2";
 let devices = [
   {
     deviceId: "led-bulb",
-    name: "LED Bulb",
+    name: "LED Bulb (9W)",
     location: "Production Floor",
     type: "LED Bulb",
     thresholds: getThresholds(),
@@ -58,7 +59,7 @@ let devices = [
     readKey: READ_KEY,
     writeKey: WRITE_KEY,
     fieldMapping: FIELD_MAPPINGS.led,
-    ratedPower: Number(process.env.RATED_POWER || 15),
+    ratedPower: Number(process.env.RATED_POWER || 9),
     tariffRate: Number(process.env.TARIFF_RATE || 6.50),
     emissionFactor: Number(process.env.CARBON_EMISSION_FACTOR || 0.82),
     status: "active",
@@ -68,17 +69,17 @@ let devices = [
     createdAt: new Date().toISOString()
   },
   {
-    deviceId: "fluorescent-bulb",
-    name: "Fluorescent Bulb",
+    deviceId: "incandescent-bulb",
+    name: "Incandescent Bulb (60W)",
     location: "Warehouse",
-    type: "Fluorescent Bulb",
+    type: "Incandescent Bulb",
     thresholds: getThresholds(),
     secretKey: WRITE_KEY,
     channelId: CHANNEL_ID,
     readKey: READ_KEY,
     writeKey: WRITE_KEY,
-    fieldMapping: FIELD_MAPPINGS.fluorescent,
-    ratedPower: Number(process.env.RATED_POWER_2 || 40),
+    fieldMapping: FIELD_MAPPINGS.incandescent,
+    ratedPower: Number(process.env.RATED_POWER_2 || 60),
     tariffRate: Number(process.env.TARIFF_RATE || 6.50),
     emissionFactor: Number(process.env.CARBON_EMISSION_FACTOR || 0.82),
     status: "active",

@@ -17,7 +17,7 @@ const mapFeedToReading = (feed, deviceId) => {
       current: Number(feed[fm.current] || 0),
       power: Number(feed[fm.power] || 0),
       energy: Number(feed[fm.energy] || 0),
-      temperature: Number(feed[fm.temperature] || 0),
+      temperature: Number(feed[fm.temperature || "field8"] || 0),
       timestamp: feed.created_at
     };
   }
@@ -58,9 +58,12 @@ const ingestData = async (req, res, next) => {
     const entryId = await writeReading({
       deviceId: req.body.deviceId,
       voltage,
-      current,
-      power,
-      energy,
+      current_led: current,
+      power_led: power,
+      energy_led: energy,
+      current_incandescent: toNumber(req.body.currentIncandescent, 0),
+      power_incandescent: toNumber(req.body.powerIncandescent, 0),
+      energy_incandescent: toNumber(req.body.energyIncandescent, 0),
       temperature,
       timestamp: req.body.timestamp
     });

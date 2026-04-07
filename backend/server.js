@@ -103,11 +103,11 @@ const initializeServices = () => {
       fieldMapping: FIELD_MAPPINGS.led
     },
     {
-      deviceId: "fluorescent-bulb",
+      deviceId: "incandescent-bulb",
       channelId: CHANNEL_ID,
       readKey: READ_KEY,
       writeKey: WRITE_KEY,
-      fieldMapping: FIELD_MAPPINGS.fluorescent
+      fieldMapping: FIELD_MAPPINGS.incandescent
     }
   ];
 
