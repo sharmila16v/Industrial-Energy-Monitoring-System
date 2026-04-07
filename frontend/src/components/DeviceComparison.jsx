@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
@@ -56,7 +56,10 @@ const DeviceComparison = ({ devices }) => {
     
     setLoading(true);
     try {
-      const res = await api.get(`/comparison/${deviceA}/${deviceB}`);
+      const res = await api.post("/api/comparison/devices", {
+        deviceAId: deviceA,
+        deviceBId: deviceB
+      });
       setComparison(res.data);
     } catch (err) {
       console.error("Failed to fetch comparison:", err);
@@ -68,13 +71,13 @@ const DeviceComparison = ({ devices }) => {
   const barChartData = comparison ? [
     {
       name: "Energy (kWh)",
-      "Device A": comparison.deviceA.powerMetrics.energyConsumed,
-      "Device B": comparison.deviceB.powerMetrics.energyConsumed
+      "Device A": comparison.deviceA.energyCost.totalEnergy,
+      "Device B": comparison.deviceB.energyCost.totalEnergy
     },
     {
       name: "Cost (₹)",
-      "Device A": comparison.deviceA.costAnalysis.totalCost,
-      "Device B": comparison.deviceB.costAnalysis.totalCost
+      "Device A": comparison.deviceA.energyCost.totalCost,
+      "Device B": comparison.deviceB.energyCost.totalCost
     },
     {
       name: "CO₂ (kg)",
@@ -177,17 +180,17 @@ const DeviceComparison = ({ devices }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard
               label="Energy Consumed"
-              valueA={comparison.deviceA.powerMetrics.energyConsumed}
-              valueB={comparison.deviceB.powerMetrics.energyConsumed}
+              valueA={comparison.deviceA.energyCost.totalEnergy}
+              valueB={comparison.deviceB.energyCost.totalEnergy}
               unit="kWh"
               icon={Zap}
-              better={comparison.comparison.energy.lower}
+              better={comparison.comparison.power.moreEfficient}
               difference={comparison.comparison.energy.difference}
             />
             <MetricCard
               label="Total Cost"
-              valueA={comparison.deviceA.costAnalysis.totalCost}
-              valueB={comparison.deviceB.costAnalysis.totalCost}
+              valueA={comparison.deviceA.energyCost.totalCost}
+              valueB={comparison.deviceB.energyCost.totalCost}
               unit="₹"
               icon={DollarSign}
               better={comparison.comparison.cost.cheaper}

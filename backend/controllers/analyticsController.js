@@ -18,7 +18,7 @@ const mapFeedToReading = (feed, deviceId) => {
       current: Number(feed[fm.current] || 0),
       power: Number(feed[fm.power] || 0),
       energy: Number(feed[fm.energy] || 0),
-      temperature: Number(feed[fm.temperature] || 0),
+      temperature: Number(feed[fm.temperature || "field8"] || 0),
       timestamp: feed.created_at
     };
   }
@@ -55,6 +55,7 @@ const buildStats = (rows) => {
       acc.current += row.current;
       acc.maxPower = Math.max(acc.maxPower, row.power);
       acc.maxEnergy = Math.max(acc.maxEnergy, row.energy);
+      acc.minEnergy = Math.min(acc.minEnergy, row.energy);
       acc.minTemp = Math.min(acc.minTemp, row.temperature);
       acc.maxTemp = Math.max(acc.maxTemp, row.temperature);
       return acc;
@@ -65,17 +66,23 @@ const buildStats = (rows) => {
       current: 0,
       maxPower: 0,
       maxEnergy: 0,
+      minEnergy: Number.POSITIVE_INFINITY,
       minTemp: Number.POSITIVE_INFINITY,
       maxTemp: 0
     }
   );
+
+  const totalEnergy =
+    sum.minEnergy === Number.POSITIVE_INFINITY
+      ? 0
+      : Math.max(0, sum.maxEnergy - sum.minEnergy);
 
   return {
     avgPower: sum.power / rows.length,
     maxPower: sum.maxPower,
     avgVoltage: sum.voltage / rows.length,
     avgCurrent: sum.current / rows.length,
-    totalEnergy: sum.maxEnergy,
+    totalEnergy,
     minTemperature: sum.minTemp === Number.POSITIVE_INFINITY ? 0 : sum.minTemp,
     maxTemperature: sum.maxTemp
   };

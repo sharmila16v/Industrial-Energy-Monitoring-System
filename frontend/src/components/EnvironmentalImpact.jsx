@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 
 const EnvironmentalImpact = ({ data, totalEnergy = 0, emissionFactor = 0.82 }) => {
-  const co2Emissions = data?.co2Emissions || (totalEnergy * emissionFactor);
-  const treesRequired = data?.treesRequired || Math.ceil(co2Emissions / 21);
-  const carKmEquivalent = data?.carKmEquivalent || (co2Emissions / 0.12);
-  const sustainabilityScore = data?.sustainabilityScore || Math.max(0, 100 - (emissionFactor * 100));
+  const co2Emissions = data?.co2Emissions ?? (totalEnergy * emissionFactor);
+  const treesRequired = data?.treesRequired ?? Math.ceil(co2Emissions / 21);
+  const carKmEquivalent = data?.carKmEquivalent ?? (co2Emissions / 0.12);
+  const sustainabilityScore = data?.sustainabilityScore ?? Math.max(0, 100 - (emissionFactor * 100));
   const greenEnergyBadge = data?.greenEnergyBadge || 
     (sustainabilityScore > 80 ? "gold" : sustainabilityScore > 60 ? "silver" : "bronze");
 

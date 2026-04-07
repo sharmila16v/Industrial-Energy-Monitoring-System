@@ -115,10 +115,11 @@ const Dashboard = () => {
   };
 
   const stats = summary?.stats || {};
+  const totalEnergyValue = Number(stats.totalEnergy || 0);
   const kpis = [
     {
       label: "Total Energy",
-      value: formatNumber(stats.totalEnergy, " kWh"),
+      value: `${totalEnergyValue < 1 ? totalEnergyValue.toFixed(4) : totalEnergyValue.toFixed(2)} kWh`,
       caption: "Daily Accumulation",
       tone: "text-cyan-300"
     },
@@ -139,6 +140,12 @@ const Dashboard = () => {
       value: formatNumber(stats.totalEnergy * 6.50, " INR"),
       caption: "Tamil Nadu @ ₹6.50/kWh",
       tone: "text-purple-300"
+    },
+    {
+      label: "Area Temperature",
+      value: formatNumber(latest?.temperature, " °C"),
+      caption: "DHT11 ambient reading",
+      tone: "text-orange-300"
     }
   ];
 
@@ -150,6 +157,13 @@ const Dashboard = () => {
   }));
 
   const status = latest?.power > (stats.maxPower || 0) ? "danger" : "ok";
+  const ecoEnergyFromStats = Number(summary?.stats?.totalEnergy ?? 0);
+  const ecoEnergyFromLatest = Number(latest?.energy ?? 0);
+  const ecoEnergy = Math.max(ecoEnergyFromStats, ecoEnergyFromLatest);
+  const ecoCo2 =
+    advancedMetrics?.carbonFootprint ??
+    summary?.carbonEstimate ??
+    (ecoEnergy * 0.82);
 
   return (
     <div className="flex flex-col gap-6 pb-8">
@@ -275,7 +289,7 @@ const Dashboard = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 mt-1">•</span>
-                  <span>Temp: {Math.round(stats.avgTemp || 0)}°C avg</span>
+                  <span>Temp: {Math.round(stats.avgTemperature || 0)}°C avg</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 mt-1">•</span>
@@ -324,12 +338,14 @@ const Dashboard = () => {
       {activeTab === "environmental" && (
         <div>
           <EnvironmentalImpact
-            totalEnergy={summary?.stats?.totalEnergy || 0}
+            totalEnergy={ecoEnergy}
             data={{
-              co2Emissions: summary?.carbonEstimate || 0,
-              treesRequired: Math.ceil((summary?.carbonEstimate || 0) / 21),
-              carKmEquivalent: (summary?.carbonEstimate || 0) / 0.12,
-              sustainabilityScore: advancedMetrics?.powerQualityIndex ? advancedMetrics.powerQualityIndex * 100 : 50
+              co2Emissions: ecoCo2,
+              treesRequired: ecoCo2 > 0 ? Math.max(1, Math.ceil(ecoCo2 / 21)) : 0,
+              carKmEquivalent: ecoCo2 / 0.12,
+              sustainabilityScore: advancedMetrics?.powerQualityIndex != null
+                ? advancedMetrics.powerQualityIndex * 100
+                : undefined
             }}
             devices={devices}
           />
